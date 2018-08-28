@@ -20,12 +20,17 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
         laytpl = layui.laytpl,
         table = layui.table;
 
-	application.init();
+	 application.init();
 	
     //编码列表
     var tableIns = table.render({
-        elem: '#dictList',
-        url : application.SERVE_URL+'/sys/sysdict/list',
+		pageName: 'pageNo' //页码的参数名称，默认：page
+		,limitName: 'pageSize' //每页数据量的参数名，默认：limit,
+		,dataName: 'list'
+		,statusCode: 200,
+		even : true 		
+        ,elem: '#dictList'
+        ,url : application.SERVE_URL+'/sys/sysdict/list',
         cellMinWidth : 95,
         page : true,
         height : "full-160",
@@ -35,24 +40,27 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
         cols : [[
 /*            {field: 'id', title: 'ID', align:"center",style:'display:none;'},*/
 			{type:'checkbox'},
-            {field: 'typeCode', title: '编码类型'},
-            {field: 'label', title: '编码名称'},
-            {field: 'value', title: '编码值'},
-			{field: 'sort',sort: true, title: '排序'},
-            {field: 'remark', title: '备注'}
-        ]]
+            {field: 'typeCode', title: '编码类型',event: 'setSign'},
+            {field: 'label', title: '编码名称',event: 'setSign'},
+            {field: 'value', title: '编码值',event: 'setSign'},
+			{field: 'sort',sort: true, title: '排序',event: 'setSign'},
+            {field: 'remark', title: '备注',event: 'setSign'}
+        ]],
+		done: function (res, curr, count) {
+			$('th div span').css({'font-weight:': 'bold'});
+		}
     });
 
 	//新增操作
-	$(document).on('click','#ADD',function(){
-    	addDict();
+	$(document).on('click','.PER_ADD',function(){
+    	_addDict();
     });
 	
 	//编辑操作
-	$(document).on('click','#EDIT',function(){		
+	$(document).on('click','.PER_EDIT',function(){		
 		var flag = publicUtil.jurgeSelectRows(table.checkStatus('dictList').data);
-		if(flag){
-			addDict(table.checkStatus('dictList').data[0]);
+		if(flag){			
+			_addDict(table.checkStatus('dictList').data[0]);
 		}else{
 			return false;
 		}
@@ -60,7 +68,7 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
     })
 	
 	//删除
-	$(document).on('click','#DEL',function(){		
+	$(document).on('click','.PER_DEL',function(){		
 		var flag = publicUtil.jurgeSelectRows(table.checkStatus('dictList').data);
 		if(flag){
             layer.confirm('确定删除此此编码？',{icon:3, title:'提示信息'},function(index){				
@@ -70,12 +78,23 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 					data:{
 						id : table.checkStatus('dictList').data[0].id  
 					},
+					beforSend: function () {
+						publicUtil.refreshToken();
+					},
 					headers : { 'Authorization' : application.HEADER},												
-					success: function (data) {
-						if(data = "success"){
-							treeTable.reload();
-							layer.close(index);	
+					success: function (res) {
+						if(res.code==application.REQUEST_SUCCESS){
+							tableIns.reload();
+							// location.reload();
+							top.layer.close(index);	
+							top.layer.msg(res.msg);							
+						}else{
+							top.layer.msg(res.msg);
 						}
+
+					},
+					error: function(res){
+						publicUtil.errofunc(res);
 					}
 				});	
             });			
@@ -86,6 +105,13 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 	
 	//获取权限并加载按钮
 	publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'get','but_per');
+	//行点击事件
+	//监听单元格事件
+	table.on('tool(dictList)', function(obj){
+		publicUtil.show_menu(obj);
+	});
+	
+	
     //搜索【此功能需要后台配合，所以暂时没有动态效果演示】
     $(".search_btn").on("click",function(){
             table.reload("dictList",{
@@ -99,52 +125,11 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
             })
     });
 
-    //添加编码
-    function addDict(edit){
-        var index = layui.layer.open({
-            title : "添加编码",
-            type : 2,
-            content : "dictAdd.html",
-            success : function(layero, index){
-                var body = layui.layer.getChildFrame('body', index);
-                if(edit){
-					$.ajax({
-						url: application.SERVE_URL +'/sys/sysdict/get', //ajax请求地址
-						type: "POST",
-						data:{
-							id :edit.id,
-						},
-						headers : { 'Authorization' : application.HEADER},						
-						success: function (data) {
-							if(data){
-								body.find(".id").val(data.id);
-								body.find(".remark").val(data.remark);
-								body.find(".value").val(data.value);
-								body.find(".typeCode").val(data.typeCode);
-								body.find(".label").val(data.label);
-								body.find(".value").val(data.value);
-								body.find(".sort").val(data.sort);  	
-							}else{
-								//console.data();
-								top.layer.msg("编码获取失败！");
-							}
-						}
-					}); 
-                    form.render();
-                }
-                setTimeout(function(){
-                    layui.layer.tips('点击此处返回编码列表', '.layui-layer-setwin .layui-layer-close', {
-                        tips: 3
-                    });
-                },500)
-            }
-        })
-        layui.layer.full(index);
-        //改变窗口大小时，重置弹窗的宽高，防止超出可视区域（如F12调出debug的操作）
-        $(window).on("resize",function(){
-            layui.layer.full(index);
-        })
-    }
 	
+	
+	//添加编码
+	function _addDict(edit){
+		publicUtil.gotoEditPage(application.SERVE_URL +'/sys/sysdict/get',edit ==undefined?null:edit.id,"编码管理","dictAdd.html");
+	}
 
 })

@@ -1,6 +1,7 @@
 package com.mpri.aio.system.controller;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mpri.aio.base.controller.BaseController;
+import com.mpri.aio.common.exception.ExceptionResult;
 import com.mpri.aio.common.exception.UnauthorizedException;
 import com.mpri.aio.common.response.RestResponse;
+import com.mpri.aio.common.response.RestToken;
 import com.mpri.aio.system.model.SysMenu;
 import com.mpri.aio.system.model.SysRole;
 import com.mpri.aio.system.model.SysUser;
@@ -59,34 +61,107 @@ public class LoginController extends BaseController {
 	 * 管理登录
 	 */
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	public RestResponse<String>  login(@RequestParam("username") String username,
+	public RestResponse<RestToken> login(@RequestParam("username") String username,
             			@RequestParam("password") String password, 
-            			@RequestParam("authCode")String authCode,HttpSession session) {
-		
-		SysUser sysUser=sysUserService.getSysUserByUsername(username);
-		//加盐处理密码
-		String safeCode=sysUser.getSafecode();
-		ByteSource salt = ByteSource.Util.bytes(safeCode);
-		String result = new Md5Hash(password,salt,3).toString();
-		
-		//验证码获取
-		String severCode = (String)session.getAttribute("authCode");
-        String clientCode = authCode;
+            			@RequestParam("authCode")String authCode,@RequestParam("comeFrom")String comeFrom,HttpSession session) {
+	
         //首先校认验证码
         if(true) {
-        	//登陆密码校验
-    		if (sysUser.getPassword().equals(result)) {
-                return new RestResponse<String>(0, "登陆成功！", JWTUtil.sign(username, result));
-            } else {
-                throw new UnauthorizedException("用户名密码错误");
-            }
+        	SysUser sysUser=sysUserService.getSysUserByUsername(username);
+    		//确认用户是否存在
+        	if(sysUser!=null) {
+    			//存在后处理
+    			//加盐处理密码
+    			String safeCode=sysUser.getSafecode();
+    			ByteSource salt = ByteSource.Util.bytes(safeCode);
+    			String result = new Md5Hash(password,salt,3).toString();
+    			
+    			//验证码获取
+    			String severCode = (String)session.getAttribute("authCode");
+    	        String clientCode = authCode;
         	
+	        	//登陆密码校验
+	    		if (sysUser.getPassword().equals(result)) {
+	    			//注册token
+	    			String token=JWTUtil.sign(username, result,comeFrom);
+	    			
+	    			//获取token过期时间
+	    			long tokenTime= JWTUtil.getTokenTime(token);
+	    			
+	    			//封装token
+	    			RestToken restToken=new RestToken();
+	    			restToken.setToken(token);
+	    			restToken.setTokenTime(tokenTime);
+	    			
+	                return new RestResponse<RestToken>(ExceptionResult.REQUEST_SUCCESS, "登陆成功！", restToken);
+	            } else {
+	                throw new UnauthorizedException("密码错误，请重新输入");
+	            }
+        	
+        	}else {
+        		return new RestResponse<RestToken>(ExceptionResult.NO_PERMISSION, "用户名不存在，请重新输入！", null);
+        	}
+		
         }else {
-        	return new RestResponse<String>(1, "验证码错误！", null);
+        	return new RestResponse<RestToken>(ExceptionResult.NO_PERMISSION, "验证码错误！", null);
         }
 	}
+
 	
-	
+	/**
+	 * 首页初次加载菜单
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "refreshToken")
+	public RestResponse<RestToken> refreshToken(@RequestParam("comeFrom")String comeFrom,HttpServletRequest request) {
+		String token=request.getHeader("Authorization");
+    	//当前时间
+		Date now=new Date();
+    	long nowTime=now.getTime();
+    	//当前token过期时间
+    	long tokenTime=JWTUtil.getTokenTime(token);
+    	String username=JWTUtil.getUsername(token);
+    	
+    	long freshTime=0;
+
+    	if(comeFrom.equals(JWTUtil.FROM_WEB)) {
+    		freshTime=JWTUtil.REFESH_TIME;
+    	}else if(comeFrom.equals(JWTUtil.FROM_APP)){
+    		freshTime=JWTUtil.APP_REFESH_TIME;
+    	}else {
+    		freshTime=JWTUtil.REFESH_TIME;
+    	}
+    	
+    	
+    	//刷新token时间
+    	if((tokenTime-nowTime)>0&(tokenTime-nowTime)<freshTime) {
+    		SysUser sysUser=sysUserService.getSysUserByUsername(username);
+    		String password=sysUser.getPassword();
+    		
+    		//注册new token
+			String newToken=JWTUtil.sign(username, password,comeFrom);
+			
+			//获取token过期时间
+			long newTokenTime= JWTUtil.getTokenTime(token);
+			
+			//封装token
+			RestToken restToken=new RestToken();
+			restToken.setToken(newToken);
+			restToken.setTokenTime(newTokenTime);
+			
+            return new RestResponse<RestToken>(ExceptionResult.REQUEST_SUCCESS, "Token已刷新", restToken);
+			
+    	}else if((tokenTime-nowTime)<0){
+    		return new RestResponse<RestToken>(ExceptionResult.REQUEST_SUCCESS, "Token已经过期，请重新登陆", null);
+    	}else  {
+    		//封装token
+			RestToken restToken=new RestToken();
+			restToken.setToken(token);
+			restToken.setTokenTime(tokenTime);
+    		return new RestResponse<RestToken>(ExceptionResult.REQUEST_SUCCESS, "token可以继续使用", restToken);
+    	}
+	}
 	
 	/**
 	 * 首页初次加载菜单
@@ -103,8 +178,8 @@ public class LoginController extends BaseController {
 		SysUser sysUser = sysUserService.getSysUserByUsername(username);
 		//获取角色
         List<SysRole> sysRoles = sysRoleService.loadRoleByUser(sysUser.getId());
-		//获取权限
-        List<SysMenu> sysMenus = sysMenuService.loadPerByUser(sysUser.getId());
+		//获取菜单权限
+        List<SysMenu> sysMenus = sysMenuService.loadMenuByUser(sysUser.getId());
         
         userInfo.put("user", sysUser);
         
@@ -143,36 +218,6 @@ public class LoginController extends BaseController {
     public RestResponse<String> unauthorized() {
         return new RestResponse<>(0, "Unauthorized", null);
     }
-		
-	/**
-	 * 测试add
-	 */
-	@RequestMapping(value = "/tsAdd", method = RequestMethod.GET)
-	@RequiresPermissions("sys:add")
-	public String tsAdd() {
-		System.out.println("add");
-		return "/index.html";
-	}
-	
-	/**
-	 * 测试add
-	 */
-	@RequestMapping(value = "/tsEdit", method = RequestMethod.GET)
-	@RequiresPermissions("sys:edit")
-	public String tsEdit() {
-		System.out.println("edit");
-		return "/index.html";
-	}
-	
-	/**
-	 * 测试add
-	 */
-	@RequestMapping(value = "/tsDel", method = RequestMethod.GET)
-	@RequiresPermissions("sys:del")
-	public String tsDel() {
-		System.out.println("del");
-		return "/index.html";
-	}
 	
 	/**
 	 * 筛选组织menu

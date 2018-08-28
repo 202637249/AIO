@@ -2,6 +2,7 @@ package com.mpri.aio.system.service;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mpri.aio.base.service.CrudService;
 import com.mpri.aio.system.mapper.SysUserMapper;
@@ -21,12 +22,44 @@ public class SysUserService extends CrudService<SysUserMapper, SysUser>  {
 	 * @param username
 	 * @return
 	 */
-	@Cacheable(value = "userCache", key = "username")
+	@Cacheable(value = "userCache", key ="#username")
 	public SysUser getSysUserByUsername(String username) {
 		SysUser sysUser=new SysUser();
 		sysUser.setUsername(username);
 		return mapper.getSysUserByUsername(sysUser);
 	}
+
+    /**
+     * 插入用户和角色信息
+    * <p>Title: insertUserRole</p>  
+    * <p>Description: </p>  
+    * @param sysUser
+     */
+	@Transactional(readOnly = false)
+	public void insertUserRole(SysUser sysUser) {
+		mapper.deleteUserRole(sysUser);
+		mapper.insertUserRole(sysUser);
+	};
 	
+    /**
+     * 删除用户和角色信息
+    * <p>Title: insertUserRole</p>  
+    * <p>Description: </p>  
+    * @param sysUser
+     */
+	@Transactional(readOnly = false)
+	public void deleteUserRole(SysUser sysUser) {
+		mapper.deleteUserRole(sysUser);
+	};
+
+//	@Transactional(rollbackFor=Exception.class)
+//	public void saveUsers(List<SysUser> userList) {
+//		for(SysUser su:userList) {
+//			mapper.insert(su);	
+//		}
+//		if (true) {
+//	        throw new RuntimeException("save 抛异常了");
+//	    }
+//	}
 
 }

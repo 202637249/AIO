@@ -17,6 +17,28 @@ layui.use(['form','layer','application','validparam'],function(){
         $ = layui.jquery;
     
     form.verify(validparam);
+	
+	function formEdit(FormDatas){
+		if(FormDatas != ''){
+			var data = FormDatas;
+			$(".id").val(data.id);
+			$(".remark").val(data.remark);
+			$(".value").val(data.value);
+			$(".typeCode").val(data.typeCode);
+			$(".label").val(data.label);
+			$(".value").val(data.value);
+			$(".sort").val(data.sort);
+		}else{
+			return false;
+		}
+	}
+
+	
+	/**
+	 * 表单回显
+	 */
+	formEdit(parent.editFormData);
+	
     form.on("submit(addDict)",function(){
         //弹出loading
         var index = top.layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
@@ -31,20 +53,23 @@ layui.use(['form','layer','application','validparam'],function(){
 				sort : $(".sort").val(),
 				remark : $(".remark").val(),
 			},
+			beforSend: function () {
+				publicUtil.refreshToken();
+			},
 			headers : { 'Authorization' : application.HEADER},			
-			success: function (data) {
-				if(data == "success"){
+			success: function (res) {
+				if(res.code==application.REQUEST_SUCCESS){
 				 	top.layer.close(index);
-		            top.layer.msg("编码" + $(".id").val() ==null|| $(".id").val() =="" ? "新增":"修改" + "成功");
+		            top.layer.msg(res.msg);	
 		            layer.closeAll("iframe");
 		            //刷新父页面
-		            parent.location.reload();	
+		            parent.location.reload();
 				}else{
-					top.layer.msg("编码" + $(".id").val() ==null|| $(".id").val() =="" ? "新增":"修改" + "失败！");
+					layer.msg(res.msg);
 				}
 			},
-			error: function(data){
-				top.layer.msg("编码" + $(".id").val() ==null|| $(".id").val() =="" ? "新增":"修改" + "失败！");
+			error: function(res){
+				publicUtil.errofunc(res);
 			}
 		}); 
         return false;

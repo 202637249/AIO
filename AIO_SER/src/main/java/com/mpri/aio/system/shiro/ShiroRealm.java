@@ -31,7 +31,7 @@ import com.mpri.aio.system.service.SysUserService;
  * @author Cary
  * @date 2018年8月2日
  */
-//@Service
+@Service
 public class ShiroRealm extends AuthorizingRealm {
 	
     @Autowired
@@ -101,7 +101,7 @@ public class ShiroRealm extends AuthorizingRealm {
              authorizationInfo.addRole(role.getName());
          }
          //保存权限
-         List<SysMenu> sysMenus = sysMenuService.loadPerByUser(sysUser.getId());
+         List<SysMenu> sysMenus = sysMenuService.loadMenuByUser(sysUser.getId());
          for (SysMenu sysMenu : sysMenus) {
              authorizationInfo.addStringPermission(sysMenu.getPermission());
          }

@@ -2,6 +2,7 @@ package com.mpri.aio.system.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.mpri.aio.base.service.CrudService;
@@ -15,14 +16,16 @@ import com.mpri.aio.system.model.SysUser;
  * @date 2018年8月1日
  */
 @Service
+
 public class SysMenuService  extends CrudService<SysMenuMapper, SysMenu>{
     
 	
 	/**
-	 * 根据角色id获取权限集合
+	 * 根据角色id获取角色集合
 	 * @param username
 	 * @return
 	 */
+	
 	public List<SysMenu> loadPerByRole(String id) {
 		SysRole sysRole=new SysRole();
 		sysRole.setId(id);
@@ -34,10 +37,11 @@ public class SysMenuService  extends CrudService<SysMenuMapper, SysMenu>{
 	 * @param id
 	 * @return
 	 */
-	public List<SysMenu> loadPerByUser(String id) {
+	@Cacheable(value = "menuCache", key = "#id")
+	public List<SysMenu> loadMenuByUser(String id) {
 		SysUser sysUser=new SysUser();
 		sysUser.setId(id);
-		return mapper.loadPerByUser(sysUser);
+		return mapper.loadMenuByUser(sysUser);
 	}
 	
 	/**
@@ -45,6 +49,7 @@ public class SysMenuService  extends CrudService<SysMenuMapper, SysMenu>{
 	 * @param id
 	 * @return
 	 */
+	@Cacheable(value = "pagePerCache", key = "#id+#menuId")
 	public List<SysMenu> loadPagePer(String id,String menuId) {
 		SysUser sysUser=new SysUser();
 		sysUser.setId(id);
@@ -57,6 +62,7 @@ public class SysMenuService  extends CrudService<SysMenuMapper, SysMenu>{
 	 * @param id
 	 * @return
 	 */
+	@Cacheable(value = "perCache", key ="#id")
 	public List<SysMenu> loadAllPer(String id) {
 		SysUser sysUser=new SysUser();
 		sysUser.setId(id);

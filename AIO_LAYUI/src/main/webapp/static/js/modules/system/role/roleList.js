@@ -14,21 +14,24 @@ layui.config({
 var formdatas;
 layui.use(['application','form','layer','laydate','table','publicUtil'],function(){
     var form = layui.form,
-        layer = parent.layer === undefined ? layui.layer : top.layer,
+        layer = layui.layer,
         $ = layui.jquery,
 				publicUtil = layui.publicUtil,
-		application = layui.application,
+			application = layui.application,
         laydate = layui.laydate,
         laytpl = layui.laytpl,
         table = layui.table;
+		//选中标记
+		var flag ;
 
-		application.initindex();
+		application.init();
     //编码列表
     var tableIns = table.render({
         elem: '#roleList',
         url : application.SERVE_URL+'/sys/sysrole/list',
         cellMinWidth : 95,
         page : true,
+				even : true ,
 				headers : { 'Authorization' : application.HEADER},
         height : "full-160",
         limit : 20,
@@ -36,17 +39,24 @@ layui.use(['application','form','layer','laydate','table','publicUtil'],function
         id : "roleList",
         cols : [[
             {type:'checkbox'},
-            {field: 'name', title: '角色名称'},
-            {field: 'type', title: '角色类型'},
-            {field: 'code', title: '角色编码'},
-            {field: 'createDate', title: '创建时间'},
-            {field: 'remark', title: '备注信息'}
+            {field: 'name', title: '角色名称',event: 'setSign'},
+            {field: 'type', title: '角色类型',event: 'setSign'},
+            {field: 'code', title: '角色编码',event: 'setSign'},
+            {field: 'createDate', title: '创建时间',event: 'setSign'},
+            {field: 'remark', title: '备注信息',event: 'setSign'}
         ]]
+				,done: function(res, curr, count){    //res 接口返回的信息,
+					publicUtil.tableSetStr(application.SERVE_URL+"/sys/sysdict/getByTypeCode", {'typeCode' : 'ROLE_TYPE'},'type');
+				}				
     });
 
 		//获取权限并加载按钮
 		publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'get','but_per');
-
+		//行点击事件
+		//监听单元格事件
+		table.on('tool(roleList)', function(obj){
+			publicUtil.show_menu(obj);
+		});
 	
     //搜索【此功能需要后台配合，所以暂时没有动态效果演示】
     $(".search_btn").on("click",function(){
@@ -64,61 +74,16 @@ layui.use(['application','form','layer','laydate','table','publicUtil'],function
         }
     });
 
-    //添加角色
-    function addRole(edit){
-        var index = layui.layer.open({
-            title : "添加角色",
-            type : 2,
-            content : "roleAdd.html",
-            success : function(layero, index){
-                var body = layui.layer.getChildFrame('body', index);
-                if(edit){
-										$.ajax({
-											url: application.SERVE_URL +'/sys/sysrole/get', //ajax请求地址
-											type: "POST",
-											data:{
-												id :edit.id,
-											},
-											headers : { 'Authorization' : application.HEADER},						
-											success: function (data) {
-												if(data){
-													 formdatas = data;
-													 body.find(".id").val(data.id);
-													 body.find(".role").val(edit.role);
-													 body.find(".code").val(edit.code);
-													 body.find(".name").val(edit.name);
-													 body.find(".remark").val(edit.remark);	
-												}else{
-													//console.data();
-													top.layer.msg("编码获取失败！");
-												}
-											}
-										}); 
-                    form.render();
-                }									 
-                setTimeout(function(){
-                    layui.layer.tips('点击此处返回编码列表', '.layui-layer-setwin .layui-layer-close', {
-                        tips: 3
-                    });
-                },500)
-            }
-        })
-        layui.layer.full(index);
-        //改变窗口大小时，重置弹窗的宽高，防止超出可视区域（如F12调出debug的操作）
-        $(window).on("resize",function(){
-            layui.layer.full(index);
-        })
-    }
 		//新增操作
-		$(document).on('click','#ADD',function(){
-	    	addRole()
+		$(document).on('click','.PER_ADD',function(){
+	    	_addRole()
 	  });
 		
 		//编辑操作
-		$(document).on('click','#EDIT',function(){		
-			var flag = publicUtil.jurgeSelectRows(table.checkStatus('roleList').data);
+		$(document).on('click','.PER_EDIT',function(){
+			flag = publicUtil.jurgeSelectRows(table.checkStatus('roleList').data);
 			if(flag){
-				addRole(table.checkStatus('roleList').data[0]);
+				_addRole(table.checkStatus('roleList').data[0]);
 			}else{
 				return false;
 			}
@@ -126,8 +91,8 @@ layui.use(['application','form','layer','laydate','table','publicUtil'],function
 	  })
 		
 		//删除
-		$(document).on('click','#DEL',function(){		
-				var flag = publicUtil.jurgeSelectRows(table.checkStatus('roleList').data);
+		$(document).on('click','.PER_DEL',function(){		
+				flag = publicUtil.jurgeSelectRows(table.checkStatus('roleList').data);
 				if(flag){
 								layer.confirm('确定删除此此角色？',{icon:3, title:'提示信息'},function(index){
 											$.ajax({
@@ -136,12 +101,21 @@ layui.use(['application','form','layer','laydate','table','publicUtil'],function
 												data:{
 													id : table.checkStatus('roleList').data[0].id  
 												},
-												headers : { 'Authorization' : application.HEADER},												
-												success: function (data) {
-													if(data = "success"){
-														treeTable.reload();
-														layer.close(index);	
+												beforSend: function () {
+													publicUtil.refreshToken();
+												},
+												headers : { 'Authorization' : application.HEADER},											
+												success: function (res) {
+													if(res.code==application.REQUEST_SUCCESS){
+														top.layer.msg(res.msg);	
+														layer.close(index);
+														table.reload();															
+													}else{
+														layer.msg('权限配置失败');
 													}
+												},
+												error: function(res){
+													publicUtil.errofunc(res);
 												}
 											})
 								});		
@@ -151,33 +125,48 @@ layui.use(['application','form','layer','laydate','table','publicUtil'],function
 	    })	
 
 		//权限操作
-		$(document).on('click','#PERM',function(){		
+		$(document).on('click','.PER_PERM',function(){		
 			var flag = publicUtil.jurgeSelectRows(table.checkStatus('roleList').data);
 				if(flag){
-					formdatas = table.checkStatus('roleList').data[0];
-					var index = layui.layer.open({
-							type: 2,
-							title: '菜单选择',
-							shadeClose: true,
-							shade: 0.8,
-							area: ['280px', '65%'],
-							// content: '../views/module/system/role/menuselect.html',
-							content: 'menuselect.html',
-							success : function(layero, index){
-								//
-								setTimeout(function(){
-										layui.layer.tips('点击此处返回角色列表', '.layui-layer-setwin .layui-layer-close', {
-												tips: 3
-										});
-								},500)											
-							}
-					});	
+							$.ajax({
+								url : application.SERVE_URL+'/sys/sysrole/get',
+								type : 'POST',
+								beforSend: function () {
+									publicUtil.refreshToken();
+								},
+								headers : { 'Authorization' : application.HEADER},	
+								data : {"id" : table.checkStatus('roleList').data[0].id}, //ajax请求地址
+								success: function (res) {
+									formdatas = res.data;
+									var index = layui.layer.open({
+											type: 2,
+											title: '菜单选择',
+											shadeClose: true,
+											shade: 0.8,
+											area: ['280px', '65%'],
+											// content: '../views/module/system/role/menuselect.html',
+											content: 'menuselect.html',
+											success : function(layero, index){										
+												setTimeout(function(){
+														layui.layer.tips('点击此处返回角色列表', '.layui-layer-setwin .layui-layer-close', {
+																tips: 3
+														});
+												},500)											
+											},
+									})																				
+								}
+							});
+											//
+
 				}else{
 					return false;
 				}
 	
 		})
 
-
+		//添加角色
+    function _addRole(edit){
+			publicUtil.gotoEditPage(application.SERVE_URL +'/sys/sysrole/get',edit ==undefined?null:edit.id,"角色管理","roleAdd.html");
+		}
 
 })

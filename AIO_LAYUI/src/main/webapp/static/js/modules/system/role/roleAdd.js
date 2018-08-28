@@ -17,10 +17,30 @@ layui.use(['form','layer','validparam','publicUtil','application'],function(){
         layer =layui.layer,
         $ = layui.jquery;
 		
+	
+	function formEdit(FormDatas){
+		if(FormDatas != ''){
+			var data = FormDatas;
+		$(".id").val(data.id);
+		$(".role").val(data.role);
+		$(".code").val(data.code);
+		$(".name").val(data.name);
+		$(".remark").val(data.remark);	
+		}else{
+			return false;
+		}
+	}
+
+	
+	/**
+	 * 表单回显
+	 */
+	formEdit(parent.editFormData);		
+		
 	if(parent.formdatas != undefined){
-		publicUtil.selectBaseAndSetVal(application.SERVE_URL+"/sys/sysdict/getByTypeCode", {'typeCode' : 'ROLETYPE'} ,"type",parent.formdatas.type);		
+		publicUtil.selectBaseAndSetVal(application.SERVE_URL+"/sys/sysdict/getByTypeCode", {'typeCode' : 'ROLE_TYPE'} ,"type",parent.formdatas.type);		
 	}else{
-		publicUtil.selectBase(application.SERVE_URL+"/sys/sysdict/getByTypeCode", {'typeCode' : 'ROLETYPE'} ,"type");		
+		publicUtil.selectBase(application.SERVE_URL+"/sys/sysdict/getByTypeCode", {'typeCode' : 'ROLE_TYPE'} ,"type");		
 	}
 	form.verify(validparam);
 	
@@ -37,21 +57,24 @@ layui.use(['form','layer','validparam','publicUtil','application'],function(){
 				type : $("#type").val(),
 				sort : $(".sort").val(),
 				remark : $(".remark").val(),
-			},			
-			success: function (data) {
-				var res = $(".id").val() ==null|| $(".id").val() =="" ? "新增":"修改" ;
-				if(data == "success"){
+			},	
+			beforSend: function () {
+				publicUtil.refreshToken();
+			},
+			headers : { 'Authorization' : application.HEADER},
+			success: function (res) {
+				if(res.code==application.REQUEST_SUCCESS){
 				 	top.layer.close(index);
-		            top.layer.msg("角色" + res + "成功");
+		            top.layer.msg(res.msg);	
 		            layer.closeAll("iframe");
 		            //刷新父页面
-		            parent.location.reload();	
+		            parent.location.reload();
 				}else{
-					top.layer.msg("角色" + res + "失败！");
+					layer.msg(res.msg);
 				}
 			},
-			error: function(data){
-				top.layer.msg("角色" + res + "失败！");
+			error: function(res){
+				publicUtil.errofunc(res);
 			}
 		}); 
         return false;

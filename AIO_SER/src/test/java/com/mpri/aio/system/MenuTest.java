@@ -22,6 +22,17 @@ public class MenuTest extends ApplicationTests {
 	
 	
 	/**
+	 * 根据用户id查询权限列表 - 通过
+	 */
+    @Test
+    public void  testLoadAllPer() {
+		List<SysMenu> list=sysMenuService.loadAllPer("0e207e95eb9d4f3985120ec7d5528013");
+		super.outprint("java.util.List", list);
+		   
+    }
+	
+	
+	/**
 	 * 根据角色id查询权限列表 - 通过
 	 */
     //@Test
@@ -31,11 +42,11 @@ public class MenuTest extends ApplicationTests {
 		   
     }
     /**
-	 * 根据用户id查询权限列表 - 通过
+	 * 根据用户id查询菜单列表 - 通过
 	 */
     //@Test
     public void  testLoadPerByUser() {
-		List<SysMenu> list=sysMenuService.loadPerByUser("0e207e95eb9d4f3985120ec7d5528013");
+		List<SysMenu> list=sysMenuService.loadMenuByUser("0e207e95eb9d4f3985120ec7d5528013");
 		super.outprint("java.util.List", list);
 		   
     }
