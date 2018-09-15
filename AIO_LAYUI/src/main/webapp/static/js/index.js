@@ -9,17 +9,21 @@ layui.config({
 	base: "static/js/"
 }).extend({
 	"bodyTab": "bodyTab",
-	"application" : "application"
+	"application" : "application",
+	"publicUtil":"publicUtil"
 })
-layui.use(['bodyTab', 'form', 'element', 'layer', 'jquery', 'application'], function () {
+layui.use(['bodyTab', 'form', 'element', 'layer', 'jquery', 'application','publicUtil'], function () {
 	var form = layui.form,
 		application = layui.application,
-		element = layui.element;
+		element = layui.element,
+		publicUtil=layui.publicUtil;
 		$ = layui.$;
-	layer = parent.layer === undefined ? layui.layer : top.layer;
+		layer = parent.layer === undefined ? layui.layer : top.layer;
 
 	application.initindex();
 	
+	//JS缓存
+	publicUtil.cacheData();
 	
 	tab = layui.bodyTab({
 		openTabNum: "20", //最大可打开窗口数量
@@ -33,13 +37,9 @@ layui.use(['bodyTab', 'form', 'element', 'layer', 'jquery', 'application'], func
 	
 	//初始化一级菜单
 	function initTopMenu(url) { //Ajax调用处理
-	console.log(application.HEADER);
 		$.ajax({
 			// url: "static/json/topMenu.json",
 			url: application.SERVE_URL + "/index",
-			headers: {
-				'Authorization': application.HEADER
-			},
 			success: function (res) {
 				$('.userName').html(res.user.name);
 				username = res.user.username;
@@ -70,6 +70,8 @@ layui.use(['bodyTab', 'form', 'element', 'layer', 'jquery', 'application'], func
 							$("#topLevelMenus").append(tittle);
 						}
 						element.init();
+						//选中第一个一级菜单
+						$("#topLevelMenus li").first().trigger("click");
 					}
 				}else{
 					top.layer.msg("您没有被授权使用系统，请联系管理员！");
@@ -152,18 +154,7 @@ layui.use(['bodyTab', 'form', 'element', 'layer', 'jquery', 'application'], func
 		cur_menu_id = $(this).children('a').attr('id');
 	})
 
-	/**
-	 * 初始化点击侧边栏导航
-	 */
-// 	var layid = location.hash.replace(/^#bodyTab=/, '');
-// 	// layui-this
-// 	if (layid) {
-// 		$('.layui-side-scroll').find('[data-id=' + layid + ']').eq(0)
-// 			.click(); // 根据传入的ID跳转
-// 	} else {
-// 		$('.layui-side-scroll').find('[data-url][data-id]').eq(0)
-// 			.click(); // 点击第一个
-// 	}
+
 	//清除缓存
 	$(".clearCache").click(function () {
 		window.sessionStorage.clear();

@@ -22,7 +22,7 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','application','publi
 	    laytpl = layui.laytpl; //很重要
 	
 		application.init();	
-    var treeTable =treeGrid.render({
+		var treeTable =treeGrid.render({
         elem: '#menuTree'
         ,url: application.SERVE_URL+'/sys/sysmenu/list'
         ,id: "menuTree",
@@ -32,13 +32,13 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','application','publi
         ,treeUpId:'parentId'//树形父id字段名称
         ,treeShowName:'name'//以树形式显示的字段
         ,cols: [[
-						{type:'checkbox'},			
-            {field:'name', title: '菜单名称',event: 'setSign'}
-            ,{field:'code', title: '菜单编码',event: 'setSign'}
-					,{field:'href', title: '菜单链接',event: 'setSign'}
-					,{field:'type', title: '菜单类型',event: 'setSign'}
-					,{field:'permission', title: '权限标记',event: 'setSign'}
-            ,{field:'isShow', title: '是否显示',event: 'setSign'}
+			{type:'checkbox'},			
+            {field:'name', title: '菜单名称'}
+            ,{field:'code', title: '菜单编码'}
+			,{field:'href', title: '菜单链接'}
+			,{field:'type', title: '菜单类型'}
+			,{field:'permission', title: '权限标记'}
+            ,{field:'isShow', title: '是否显示'}
         ]]        
 		,done: function(res, curr, count){    //res 接口返回的信息,
 			publicUtil.tableSetStr(application.SERVE_URL+"/sys/sysdict/getByTypeCode", {'typeCode' : 'MENU_SHOW'},'isShow');
@@ -50,12 +50,21 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','application','publi
 	//获取权限并加载按钮
 	publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'get','but_per');
 	
-	
-	//行点击事件
-	//监听单元格事件
-	treeGrid.on('tool(menuTree)', function(obj){
+	//右键点击事件
+	treeGrid.on('rowRight(menuTree)', function(obj){
 		publicUtil.show_menu(obj);
 	});
+	
+	//左键点击事件
+	treeGrid.on('row(menuTree)', function(obj){
+		publicUtil.hiddenMenu(obj);
+	});
+//	
+//	//行点击事件
+//	//监听单元格事件
+//	treeGrid.on('tool(menuTree)', function(obj){
+//		publicUtil.show_menu(obj);
+//	});
 	
     //搜索【此功能需要后台配合，所以暂时没有动态效果演示】
     $(".search_btn").on("click",function(){
@@ -98,29 +107,21 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','application','publi
 			var flag = publicUtil.jurgeSelectRows(treeGrid.checkStatus('menuTree').data);
 			if(flag){
 	            layer.confirm('确定删除此菜单吗？',{icon:3, title:'提示信息'},function(index){
-								$.ajax({
-									url: application.SERVE_URL+"/sys/sysmenu/delete", //ajax请求地址
-									beforSend: function () {
-										publicUtil.refreshToken();
-									},
-									type: "POST",
-									data:{
-										id : treeGrid.checkStatus('menuTree').data[0].id 
-									},
-									headers : { 'Authorization' : application.HEADER},												
-									success: function (res) {
-										if(res.code==application.REQUEST_SUCCESS){
-											treeTable.reload();
-											layer.close(index);
-											top.layer.msg(res.msg);
-										}else{
-											top.layer.msg(res.msg);
-										}
-									},
-									error: function(res){
-										publicUtil.errofunc(res);
-									}
-								});											 
+					$.ajax({
+						url: application.SERVE_URL+"/sys/sysmenu/delete", //ajax请求地址
+						data:{
+							id : treeGrid.checkStatus('menuTree').data[0].id 
+						},											
+						success: function (res) {
+							if(res.code==application.REQUEST_SUCCESS){
+								treeTable.reload();
+								layer.close(index);
+								top.layer.msg(res.msg);
+							}else{
+								top.layer.msg(res.msg);
+							}
+						}
+					});											 
 	            });			
 			}else{
 				return false;

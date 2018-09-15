@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.util.ByteSource;
@@ -25,6 +24,7 @@ import com.mpri.aio.common.exception.ExceptionResult;
 import com.mpri.aio.common.exception.UnauthorizedException;
 import com.mpri.aio.common.response.RestResponse;
 import com.mpri.aio.common.response.RestToken;
+import com.mpri.aio.system.init.InitCache;
 import com.mpri.aio.system.model.SysMenu;
 import com.mpri.aio.system.model.SysRole;
 import com.mpri.aio.system.model.SysUser;
@@ -32,6 +32,7 @@ import com.mpri.aio.system.service.SysMenuService;
 import com.mpri.aio.system.service.SysRoleService;
 import com.mpri.aio.system.service.SysUserService;
 import com.mpri.aio.system.shiro.JWTUtil;
+import com.mpri.aio.system.utils.AESUtil;
 import com.mpri.aio.system.vo.MenuVo;
 
 /**
@@ -55,56 +56,57 @@ public class LoginController extends BaseController {
 	//菜单根节点的父值定义为root
 	private final String parentId="root";
 	
-
-	
 	/**
 	 * 管理登录
 	 */
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public RestResponse<RestToken> login(@RequestParam("username") String username,
             			@RequestParam("password") String password, 
-            			@RequestParam("authCode")String authCode,@RequestParam("comeFrom")String comeFrom,HttpSession session) {
+            			@RequestParam("comeFrom")String comeFrom) {
 	
-        //首先校认验证码
-        if(true) {
-        	SysUser sysUser=sysUserService.getSysUserByUsername(username);
-    		//确认用户是否存在
-        	if(sysUser!=null) {
-    			//存在后处理
-    			//加盐处理密码
-    			String safeCode=sysUser.getSafecode();
-    			ByteSource salt = ByteSource.Util.bytes(safeCode);
-    			String result = new Md5Hash(password,salt,3).toString();
+
+		//首先校认验证码
+        //if(true) {
+    	SysUser sysUser=sysUserService.getSysUserByUsername(username);
+		//确认用户是否存在
+    	if(sysUser!=null) {
+			//存在后处理
+    		//解密密码
+    		password=AESUtil.aesDecrypt(password);
+			//加盐处理密码
+			String safeCode=sysUser.getSafecode();
+			ByteSource salt = ByteSource.Util.bytes(safeCode);
+			String result = new Md5Hash(password,salt,3).toString();
+			
+			//验证码获取
+			//String severCode = (String)session.getAttribute("authCode");
+	        //String clientCode = authCode;
+    	
+        	//登陆密码校验
+    		if (sysUser.getPassword().equals(result)) {
+    			//注册token
+    			String token=JWTUtil.sign(username, result,comeFrom);
     			
-    			//验证码获取
-    			String severCode = (String)session.getAttribute("authCode");
-    	        String clientCode = authCode;
-        	
-	        	//登陆密码校验
-	    		if (sysUser.getPassword().equals(result)) {
-	    			//注册token
-	    			String token=JWTUtil.sign(username, result,comeFrom);
-	    			
-	    			//获取token过期时间
-	    			long tokenTime= JWTUtil.getTokenTime(token);
-	    			
-	    			//封装token
-	    			RestToken restToken=new RestToken();
-	    			restToken.setToken(token);
-	    			restToken.setTokenTime(tokenTime);
-	    			
-	                return new RestResponse<RestToken>(ExceptionResult.REQUEST_SUCCESS, "登陆成功！", restToken);
-	            } else {
-	                throw new UnauthorizedException("密码错误，请重新输入");
-	            }
-        	
-        	}else {
-        		return new RestResponse<RestToken>(ExceptionResult.NO_PERMISSION, "用户名不存在，请重新输入！", null);
-        	}
-		
-        }else {
-        	return new RestResponse<RestToken>(ExceptionResult.NO_PERMISSION, "验证码错误！", null);
-        }
+    			//获取token过期时间
+    			long tokenTime= JWTUtil.getTokenTime(token);
+    			
+    			//封装token
+    			RestToken restToken=new RestToken();
+    			restToken.setToken(token);
+    			restToken.setTokenTime(tokenTime);
+    			
+                return new RestResponse<RestToken>(ExceptionResult.REQUEST_SUCCESS, "登陆成功！", restToken);
+            } else {
+                throw new UnauthorizedException("密码错误，请重新输入");
+            }
+    	
+    	}else {
+    		return new RestResponse<RestToken>(ExceptionResult.NO_PERMISSION, "账号或密码错误，请重新输入！", null);
+    	}
+//    			
+//        }else {
+//        	return new RestResponse<RestToken>(ExceptionResult.NO_PERMISSION, "验证码错误！", null);
+//        }
 	}
 
 	
@@ -132,8 +134,6 @@ public class LoginController extends BaseController {
     	}else {
     		freshTime=JWTUtil.REFESH_TIME;
     	}
-    	
-    	
     	//刷新token时间
     	if((tokenTime-nowTime)>0&(tokenTime-nowTime)<freshTime) {
     		SysUser sysUser=sysUserService.getSysUserByUsername(username);
@@ -197,7 +197,7 @@ public class LoginController extends BaseController {
 	}
 	
 	/**
-	 * 首页初次加载菜单
+	 * 首页初次加载权限按钮
 	 * @param request
 	 * @return
 	 */
@@ -212,7 +212,25 @@ public class LoginController extends BaseController {
 		return sysmenus;
 	}
 	
-
+	/**
+	 * 加载缓存到前台
+	 * @return
+	 */
+	@RequestMapping(value = "/loadCacheMap")
+	public RestResponse<Map<String,Object>> loadCacheMap() {
+		Map<String,Object> cacheMap=new HashMap<String,Object>();
+		Object dictCache  =InitCache.dictCache;
+		Object orgCache  = InitCache.orgCache;
+		Object areaCache  = InitCache.areaCache;
+		
+		cacheMap.put("dictCache", dictCache);
+		cacheMap.put("orgCache", orgCache);
+		cacheMap.put("areaCache", areaCache);
+		
+		return new RestResponse<Map<String,Object>>(ExceptionResult.REQUEST_SUCCESS, "缓存数据获取成功", cacheMap);
+		
+	}
+	
 	@GetMapping(path = "/401")
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public RestResponse<String> unauthorized() {

@@ -16,7 +16,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
 @Configuration
@@ -44,11 +43,12 @@ public class JWTConfig {
         //4.LinkedHashMap是有序的，进行顺序拦截器配置
         Map<String, String> filterChainDefinitionMap = new LinkedHashMap<String, String>();
         
-        filterChainDefinitionMap.put("/**", "jwt");//通过自定义的jwt权限过滤器
+        
         
         //5.设置默认通过的的url
         filterChainDefinitionMap.put("/captcha", "anon");
         filterChainDefinitionMap.put("/login", "anon");
+        filterChainDefinitionMap.put("/qrcode", "anon");
         
         //6.访问401和404页面不通过我们的Filter
         filterChainDefinitionMap.put("/401", "anon");
@@ -56,6 +56,8 @@ public class JWTConfig {
         
         //7.所有url必须通过认证才可以访问
         //filterChainDefinitionMap.put("/**", "authc");
+        
+        filterChainDefinitionMap.put("/**", "jwt");//通过自定义的jwt权限过滤器
         
         //8.设置shiroFilterFactoryBean的FilterChainDefinitionMap
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);

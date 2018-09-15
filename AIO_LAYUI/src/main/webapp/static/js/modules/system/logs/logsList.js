@@ -46,6 +46,7 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 				});
 	//获取权限并加载按钮
 	publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'get','but_per');
+	
     //日志列表
     var tableIns = table.render({
         elem: '#logsList',
@@ -56,23 +57,34 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 		headers : { 'Authorization' : application.HEADER},
         height : "full-160",
         limit : 10,
-        id : "logsListTable",
+        id : "logsList",
         cols : [[
-            {field: 'type', title: '日志类型',event: 'setSign'},
-            {field: 'username', title: '创建者',event: 'setSign'},
-			{field: 'createDate', title: '创建日期',event: 'setSign'},
-            {field: 'remoteAddr', title: '操作IP地址',event: 'setSign'},
-						{field: 'userAgent', title: '用户代理',event: 'setSign'},
-						{field: 'requestUri', title: '请求URI',event: 'setSign'},
-						{field: 'method', title: '操作方式',event: 'setSign'},
-            {field: 'params', title: '操作提交的数据',event: 'setSign'},
-            {field: 'excContent', title: '异常信息',event: 'setSign'}
+        	//{type:'checkbox'},
+            {field: 'type', title: '日志类型'},
+            {field: 'username', title: '创建者'},
+			{field: 'createDate', title: '创建日期'},
+            {field: 'remoteAddr', title: '操作IP地址'},
+						{field: 'userAgent', title: '用户代理'},
+						{field: 'requestUri', title: '请求URI'},
+						{field: 'method', title: '操作方式'},
+            {field: 'params', title: '操作提交的数据'},
+            {field: 'excContent', title: '异常信息'}
         ]],
 				done: function(res, curr, count){    //res 接口返回的信息
 						publicUtil.tableSetStr(application.SERVE_URL+"/sys/sysdict/getByTypeCode", {'typeCode' : 'LOGS_TYPE'},'type');
 				}
     });
 		
+    //右键点击事件
+	table.on('rowRight(logsList)', function(obj){
+		
+		publicUtil.show_menu(obj);
+	});
+	
+	//左键点击事件
+	table.on('row(logsList)', function(obj){
+		publicUtil.hiddenMenu(obj);
+	});
 	
 	//搜索【此功能需要后台配合，所以暂时没有动态效果演示】
 	$(".search_btn").on("click",function(){
@@ -92,12 +104,6 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 			})
 	});
 	
-	//行点击事件
-	//监听单元格事件
-	table.on('tool(logsList)', function(obj){
-		publicUtil.show_menu(obj);
-	});
-	
 	function openLogsInfo(edit){
 		var index = layui.layer.open({
 				type: 2,
@@ -112,22 +118,9 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 				if(edit){
 					$.ajax({
 						url: application.SERVE_URL +'/sys/syslogs/get', //ajax请求地址
-						type: "POST",
 						data:{
 							id :edit.id,
-						},
-						headers : { 'Authorization' : application.HEADER},						
-						beforeSend: function(){
-							$.ajax({
-								async:false,
-								url: application.SERVE_URL +'/refreshToken', //ajax请求地址
-								type: "POST",
-								headers : { 'Authorization' : application.HEADER},						
-								success: function (data) {
-									console.log(data);
-								}
-							});
-						},
+						},					
 						success: function (result) {
 							if(result.code==application.REQUEST_SUCCESS){
 								body.find(".id").val(result.data.id);
@@ -141,10 +134,6 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 								body.find(".params").val(result.data.params);
 								body.find(".excContent").val(result.data.excContent);
 							}
-						},	
-						error(data){
-							var result=data.responseJSON;
-							top.layer.msg(result.msg+"("+result.code+")");
 						}
 					}); 
                     form.render();

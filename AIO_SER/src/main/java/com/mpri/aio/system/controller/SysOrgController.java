@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +43,7 @@ public class SysOrgController extends BaseController {
 	* @return
 	 */
 	@CrossOrigin
-	@GetMapping(value = "/tree")
+	@PostMapping(value = "/tree")
 	public ResJson<SysOrg> tree(SysOrg sysOrg) {
 		List<SysOrg> list = sysOrgService.loadAllListBy(sysOrg);							
 		ResJson<SysOrg> rj = new ResJson<SysOrg>();
@@ -62,7 +61,7 @@ public class SysOrgController extends BaseController {
 	* @return
 	 */
 	@CrossOrigin
-	@GetMapping(value = "/list")
+	@PostMapping(value = "/list")
 	public PageIo<SysOrg> list(int pageNo,int pageSize,SysOrg sysOrg){
 		PageIo<SysOrg> pageInfo = sysOrgService.loadByPage(pageNo,pageSize,sysOrg);
 		return pageInfo;
@@ -125,7 +124,7 @@ public class SysOrgController extends BaseController {
 	 * @return
 	 */
 	@CrossOrigin
-	@GetMapping(value = "/loadAllListBy")
+	@PostMapping(value = "/loadAllListBy")
 	public RestResponse<List<SysOrg>>  loadAllListBy(SysOrg sysOrg) {			
 		return new RestResponse<List<SysOrg>>(ExceptionResult.REQUEST_SUCCESS, "获取成功！", sysOrgService.loadAllListBy(sysOrg));
 

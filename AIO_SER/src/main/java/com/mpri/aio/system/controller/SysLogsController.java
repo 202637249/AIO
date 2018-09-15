@@ -2,7 +2,6 @@ package com.mpri.aio.system.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,7 +38,7 @@ public class SysLogsController extends BaseController{
 	* @return
 	 */
 	@CrossOrigin
-	@GetMapping(value = "/list")
+	@PostMapping(value = "/list")
 	public PageIo<SysLogs> list(int pageNo,int pageSize,SysLogs sysLogs){
 		return sysLogsService.loadByPage(pageNo, pageSize, sysLogs);
 	}

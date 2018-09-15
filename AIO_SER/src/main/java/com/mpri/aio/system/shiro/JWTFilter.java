@@ -1,6 +1,6 @@
 package com.mpri.aio.system.shiro;
 
-import java.io.IOException;
+import java.util.Date;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -8,10 +8,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import com.mpri.aio.common.exception.ExceptionResult;
+import com.mpri.aio.common.response.RestResponse;
+import com.mpri.aio.system.utils.AESUtil;
+
 
 /**
  * JWT过滤器
@@ -19,10 +22,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * @date 2018年8月15日
  */
 public class JWTFilter extends BasicHttpAuthenticationFilter {
-	
-	private Logger logger = LoggerFactory.getLogger(getClass());
-	
-	
     
 	/**
      * 判断用户是否想要登入。
@@ -32,7 +31,30 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
     protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
         HttpServletRequest req = (HttpServletRequest) request;
         String authorization = req.getHeader("Authorization");
-        return authorization != null;
+        String time = req.getHeader("Time");
+        String key = req.getHeader("Key");
+        long nowTime=new Date().getTime();
+        long tokenTime=0;
+
+        //token 存在
+        if(null==authorization || authorization.equals("")) {
+        	return false;
+        }else {
+        	tokenTime=JWTUtil.getTokenTime(authorization);
+        }
+        
+        //请求校验
+        if(!(time!=null&&key!=null&&AESUtil.aesDecrypt(key).equals(time))) {
+        	return false;
+        }
+        
+        //token过期
+        if(tokenTime-nowTime<0) {
+        	return false;
+        }
+        
+        return true;
+
     }
 
     /**
@@ -67,6 +89,8 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
             } catch (Exception e) {
                 response401(request, response);
             }
+        }else {
+        	response401(request, response);
         }
         return true;
     }
@@ -92,12 +116,8 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
     /**
      * 将非法请求跳转到 /401
      */
-    private void response401(ServletRequest req, ServletResponse resp) {
-        try {
-            HttpServletResponse httpServletResponse = (HttpServletResponse) resp;
-            httpServletResponse.sendRedirect("/401");
-        } catch (IOException e) {
-        	logger.error(e.getMessage());
-        }
+    private RestResponse<String> response401(ServletRequest req, ServletResponse resp) {
+       
+      return new RestResponse<String>(ExceptionResult.NO_PERMISSION, "请求未被接受！", null);
     }
 }

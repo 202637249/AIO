@@ -1,19 +1,14 @@
 <!DOCTYPE html>
 <HTML>
 <HEAD>
-	<TITLE>菜单选择</TITLE>
-	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-	<link rel="stylesheet" href="../../../../static/layui/css/layui.css" media="all" />
-	<link href="../../../../static/css/zTree/metroStyle/metroStyle.css" type="text/css" media="screen" rel="stylesheet"/>
-	<link href="../../../../static/css/zTree/demo.css" type="text/css" media="screen" rel="stylesheet"/>
-	<link rel="stylesheet" href="../../../../static/css/public.css" media="all" />
-	<script type="text/javascript" src="../../../../static/layui/layui.js"></script>
-	<script type="text/javascript" src="../../../../static/js/ztree/jquery-1.4.4.min.js"></script>
-	<script type="text/javascript" src="../../../../static/js/ztree/jquery.ztree.core.min.js"></script>
-	<script type="text/javascript" src="../../../../static/js/ztree/jquery.ztree.excheck.js"></script>
-	<script type="text/javascript" src="../../../../static/js/ztree/jquery.ztree.exedit.js"></script>
+	<title>菜单选择</title>
+	<meta charset="utf-8">
+    <script type="text/javascript" charset="UTF-8" src="../../../../static/js/header_base.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../../../static/js/header_ztree.js"></script>
+	<script type="text/javascript" charset="UTF-8" src="../../../../static/js/header_com.js"></script>	
 	<script type="text/javascript">	
-		var layer;var ztreeObj;
+		var layer;
+		var ztreeObj;
 		layui.config({
 			base : "../../../../static/js/"
 		}).extend({
@@ -27,16 +22,16 @@
 			//ztree设置
 			var setting = {
 					view: {
-							selectedMulti: false
+						selectedMulti: false
 					},
 
 					data: {
-							simpleData: {
-									enable: true,
-									idKey: "id",
-									pIdKey: "parentId"
-									// rootPId: 0									
-							}
+						simpleData: {
+							enable: true,
+							idKey: "id",
+							pIdKey: "parentId"
+							// rootPId: 0									
+						}
 					},
 					check: {
 						enable: true,
@@ -55,15 +50,12 @@
 				
 				$.ajax({
 					url: application.SERVE_URL+'/sys/sysorg/tree',
-					beforSend: function () {
-						publicUtil.refreshToken();
-					},				  //ajax请求地址
-					headers : { 'Authorization' : application.HEADER},
+					type:"post",
 					success: function (data) {	
 						ztreeObj = $.fn.zTree.init($("#treeDemo"), setting, data.data);  //加载数据
-											//获取根节点个数,getNodes获取的是根节点的集合
+						//获取根节点个数,getNodes获取的是根节点的集合
 						var nodeList = ztreeObj.getNodes();
-			　　　　　　//展开第一个根节点
+			　　　　　　	//展开第一个根节点
 						ztreeObj.expandNode(nodeList[0], true);
 						//回填机构的
 						publicUtil.setTreeSel($(".parentId",parent.document).val(),ztreeObj);							

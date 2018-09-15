@@ -18,7 +18,7 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','publicUtil','applic
 		application = layui.application,
 	    laydate = layui.laydate,
 		form = layui.form,
-	    laytpl = layui.laytpl; 
+	    laytpl = layui.laytpl;
 		
 	application.init();	
     var treeTable = treeGrid.render({
@@ -48,11 +48,14 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','publicUtil','applic
     
 	//获取权限并加载按钮
 	publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'get','but_per');
-	//行点击事件
-	//监听单元格事件
-	treeGrid.on('tool(areaTree)', function(obj){
-		var data = obj.data;
-		publicUtil.show_menu(data);
+	//右键点击事件
+	treeGrid.on('rowRight(areaTree)', function(obj){
+		publicUtil.show_menu(obj);
+	});
+	
+	//左键点击事件
+	treeGrid.on('row(areaTree)', function(obj){
+		publicUtil.hiddenMenu(obj);
 	});
 
     //搜索【此功能需要后台配合，所以暂时没有动态效果演示】
@@ -108,10 +111,6 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','publicUtil','applic
 			layer.confirm('确定删除此区域吗？',{icon:3, title:'提示信息'},function(index){
 				$.ajax({
 					url: application.SERVE_URL+"/sys/sysarea/delete", //ajax请求地址
-					type: "POST",
-					beforSend: function () {
-						publicUtil.refreshToken();
-					},
 					data:{
 						id : treeGrid.checkStatus('areaTree').data[0].id 
 					},
@@ -124,9 +123,6 @@ layui.use(['element', 'layer', 'form', 'upload', 'treeGrid','publicUtil','applic
 						}else{
 							top.layer.msg(res.msg);
 						}
-					},
-					error: function(res){
-						publicUtil.errofunc(res);
 					}
 				});					 
 			});			
