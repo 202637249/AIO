@@ -14,9 +14,14 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
 	var table = layui.table;
 	var treeGrid = layui.treeGrid;
     var keyTime =new Date().getTime().toString();
-	/**
-	 * 初始化AJAX的请求
-	 */
+    var nowTime = new Date().getTime();
+    
+    //全局弹窗
+	layer.config({
+		anim: 5//默认动画风格
+	});
+	
+	//初始化AJAX的请求 
 	$.ajaxSetup( {
 	    type: "POST", // 默认使用POST方式
 	    headers : {
@@ -26,12 +31,12 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
 	    },
 	    beforeSend: function(){
 	    	refreshToken();
+	    	nowTime=new Date().getTime();
 		},
-	    error: function(res){ // 出错时默认的处理函数
-	    	console.log(res);
-	    	//publicUtil.errofunc(res);
-	    }
-	} );
+		error: function(res){ // 出错时默认的处理函数
+			errofunc(res);
+		}
+	});
 	
 	//loading 
 	var index = layer.load(2, {time: 10*1000,shade:0.1}); //又换了种风格，并且设定最长等待10秒 
@@ -49,6 +54,7 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
             $.ajax({
                 url:application.SERVE_URL + "/loadCacheMap",
                 type: "POST",
+                async: true,
 				success:function(result){
                    if(result.code==application.REQUEST_SUCCESS){
                 	   var dict=sessionStorage.getItem("dictCache");
@@ -64,7 +70,6 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
                 	   if(area===null){
                 		   sessionStorage.setItem("areaCache",JSON.stringify(result.data.areaCache));
                 	   }
-                	   
                    }
 				}
 			})
@@ -203,7 +208,7 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
 						 }
 					},
 					error: function(){
-						errofuntion();
+						errofunc();
 					}
 				});				
 			}
@@ -262,9 +267,6 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
 // 						// layui.layer.msg(result.msg);
 // 						return false;
 // 					}
-				},
-				error: function(){
-					errofuntion();
 				}
 			}); 
 		},
@@ -300,17 +302,23 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
 				var nodes = treeObj.getNodesByParam("id",
 						treeNode, null);
 				//勾选当前选中的节点
-				treeObj.checkNode(nodes[0], true, true);
-				ztreeObj.expandNode(nodes[0], true);
-			}else{
-				//遍历勾选角色关联的菜单数据
-				for (var i = 0; i < treeNode.length; i++) {
-					//根据角色菜单节点数据的属性搜索，获取与完整菜单树完全匹配的节点JSON对象集合
-					var nodes = treeObj.getNodesByParam("id",
-							treeNode[i].id, null);
-					//勾选当前选中的节点
+				if(nodes.length > 0){
 					treeObj.checkNode(nodes[0], true, true);
 					ztreeObj.expandNode(nodes[0], true);
+				}
+			}else{
+				if(treeNode.length < 0){
+					return;
+				}else{
+					//遍历勾选角色关联的菜单数据
+					for (var i = 0; i < treeNode.length; i++) {
+						//根据角色菜单节点数据的属性搜索，获取与完整菜单树完全匹配的节点JSON对象集合
+						var nodes = treeObj.getNodesByParam("id",
+								treeNode[i].id, null);
+						//勾选当前选中的节点
+						treeObj.checkNode(nodes[0], true, false);
+						ztreeObj.expandNode(nodes[0], true);
+					}
 				}
 			}
 		},
@@ -331,25 +339,45 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
 			check_ed(obj);
 			
 		},
-			
 		//error 方法 
 		errofunc :function(res){
-			var result=data.responseJSON;
+			var result=res.responseJSON;
+			//判断后台是否返回值
 			if(result==undefined){
-				top.layer.msg("服务连接中断，请检查网络连接情况！");
+				//判断头文件报错信息
+				//error
+				var statusText=res.statusText;
+				//401 402
+				var status=res.status;
+				if(status===401){
+					top.layer.msg("操作权限不足，或因为长时间未操作，请重新登录！(401)",{time:1000},function(){
+						top.location.href = application.BASE_URL+"/login.html";
+					});
+				}else if(status===500){
+					top.layer.msg("服务内部错误，请刷新页面或联系管理员 ！",{time:1000});
+				}else{
+					top.layer.msg("服务连接异常，请检查网络连接情况，并重新操作 ！",{time:1000});
+				}
+
 			}else{
-				top.layer.msg(result.msg+"("+result.code+")");
+				top.layer.msg(result.msg+"("+result.code+")",{time:1000});
 			}
 		},
-		
 		hiddenMenu : function(obj){
 			check_ed(obj);
 			//隐藏右键菜单
 			$("#show_menu").css({display:'block'}).hide();
 			return;
-		}
-		
-	
+		},
+		//Html转义
+		htmlEscape : function(value){
+			return $('<div/>').text(value).html();
+		},
+		//Html反转义
+		htmlDecode :function(value){
+			return $('<div/>').html(value).text();
+		}	
+
 	}
 		//checkbox 被选中事件
 		function check_ed(obj){		
@@ -394,52 +422,68 @@ layui.define(['form','layer','jquery','application','table','treeGrid'],function
 		}
 
 		//error方法
-		function errofuntion(res){	
-			var result=data.responseJSON;
+		function errofunc(res){
+			var result=res.responseJSON;
+			//判断后台是否返回值
 			if(result==undefined){
-				top.layer.msg("服务连接中断，请检查网络连接情况，并重新登陆！");
+				//判断头文件报错信息
+				//error
+				var statusText=res.statusText;
+				//401 402
+				var status=res.status;
+				if(status===401){
+					top.layer.msg("操作权限不足，或因为长时间未操作，请重新登录！(401)",{time:1000},function(){
+						top.location.href = application.BASE_URL+"/login.html";
+					});
+				}else if(status===500){
+					top.layer.msg("服务内部错误，请刷新页面或联系管理员 ！",{time:1000});
+				}else{
+					top.layer.msg("服务连接异常，请检查网络连接情况，并重新操作 ！",{time:1000});
+				}
+
 			}else{
-				top.layer.msg(result.msg+"("+result.code+")");
+				top.layer.msg(result.msg+"("+result.code+")",{time:1000});
 			}
 		}
 		
 		//刷新token的方法（）
 		function refreshToken(){
-			if(judgeTokenIssue()){
-				$.ajax({
-					async:false,
-					beforeSend: function(){},
-					url: application.SERVE_URL +'/refreshToken', //ajax请求地址
-					data : {"comeFrom" : application.COMEFROM},
-					success: function (data) {
-						sessionStorage.removeItem("token");
-						sessionStorage.removeItem("tokenTime");
-						sessionStorage.setItem("token", data.data.token);
-						sessionStorage.setItem("tokenTime", data.data.tokenTime);
-					},
-					error: function (errdata) {
-						top.location.href = application.BASE_URL+"/login.html";
-					}
-				});
-			}
+			var exeTime=new Date().getTime();
+			var isrun=exeTime-nowTime;
+			if(isrun>application.SPACE){//请求频度过滤重复刷新请求
+				if(judgeTokenIssue()){
+					$.ajax({
+						async:false,
+						beforeSend: function(){},
+						url: application.SERVE_URL +'/refreshToken', //ajax请求地址
+						data : {"comeFrom" : application.COMEFROM},
+						success: function (data) {
+							sessionStorage.removeItem("token");
+							sessionStorage.removeItem("tokenTime");
+							sessionStorage.setItem("token", data.data.token);
+							sessionStorage.setItem("tokenTime", data.data.tokenTime);
+						}
+					});
+				}
+			}   
 		}
 		
 		//判断token起效时间的方法
 		function judgeTokenIssue(){
-			var timelogin= application.TOKENTIME - new Date().getTime() ;
+			var timelogin= application.TOKENTIME - new Date().getTime();
 			if(timelogin < application.TOKENISSUE && timelogin>0){
 				return true;
 			}else if(timelogin < 0) {
-				top.layer.alert("因长时间未操作，请重新登陆!",{closeBtn:0},function(){
+				sessionStorage.removeItem("token");
+				sessionStorage.removeItem("tokenTime");
+				top.layer.msg("因长时间未操作，请重新登陆!",{time:1000},function(){
 					top.location.href = application.BASE_URL+"/login.html";
 				});
 			}else{
 				return false;
 			}
+			
 		}
-		
-		
-		
-		
+
     exports('publicUtil', obj);
 })

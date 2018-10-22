@@ -26,7 +26,7 @@ layui.use(['element', 'layer', 'form', 'tree','table','laydate','application','p
 			
 			application.init();
 			//获取权限并加载按钮
-			publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'get','but_per');
+			publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'post','but_per');
 			
 		//选中标记
 		var flag ;
@@ -53,7 +53,7 @@ layui.use(['element', 'layer', 'form', 'tree','table','laydate','application','p
 		//初始化树
 		initTree();
 		function initTree() {
-			$.ajax({
+			_$.ajax({
 				url: application.SERVE_URL+'/sys/sysorg/tree',
 				type:"post",
 				success: function (data) {
@@ -70,7 +70,7 @@ layui.use(['element', 'layer', 'form', 'tree','table','laydate','application','p
 			
 		function covert(data) {
 			for (var i = 0; i < data.length; i++) {
-				data[i].name = data[i].name +"("+dateUtils.getYearAndDay(data[i].openDate)+"--"+ judgeNull(data[i].closeDate)+")"
+				data[i].name = publicUtil.htmlDecode(data[i].name) +"("+dateUtils.getYearAndDay(data[i].openDate)+"--"+ judgeNull(data[i].closeDate)+")"
 			}
 			return data;
 		}
@@ -133,7 +133,7 @@ layui.use(['element', 'layer', 'form', 'tree','table','laydate','application','p
 					}
 				})
 			}else{
-				layer.msg("请输入搜索的内容");
+				layer.msg("请输入搜索的内容",{time: 1000});
 			}
 		});			
 
@@ -180,9 +180,9 @@ layui.use(['element', 'layer', 'form', 'tree','table','laydate','application','p
 									tableIns.reload();
 									// location.reload();
 									top.layer.close(index);	
-									top.layer.msg(res.msg);							
+									top.layer.msg(res.msg,{time: 1000});							
 								}else{
-									top.layer.msg(res.msg);
+									top.layer.msg(res.msg,{time: 1000});
 								}
 
 							}

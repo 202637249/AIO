@@ -1,5 +1,6 @@
 package com.mpri.aio.system.service;
 
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +17,20 @@ import com.mpri.aio.system.model.SysUser;
 @Service
 public class SysUserService extends CrudService<SysUserMapper, SysUser>  {
 	
-
+	/**
+	 * 保存用户信息的重写
+	 * @param username
+	 * @return
+	 */
+	@CachePut(value = "userCache", key ="#sysUser.username")
+	public SysUser save(SysUser sysUser) {
+		super.save(sysUser);
+		//反查对象并返回至缓存
+		return mapper.getSysUserByUsername(sysUser);
+	} 
+	
+	
+	
 	/**
 	 * 根据用户名获取用户对象
 	 * @param username
@@ -41,9 +55,9 @@ public class SysUserService extends CrudService<SysUserMapper, SysUser>  {
 	}
     /**
      * 插入用户和角色信息
-    * <p>Title: insertUserRole</p>  
-    * <p>Description: </p>  
-    * @param sysUser
+     * <p>Title: insertUserRole</p>  
+     * <p>Description: </p>  
+     * @param sysUser
      */
 	@Transactional(readOnly = false)
 	public void insertUserRole(SysUser sysUser) {
@@ -53,23 +67,22 @@ public class SysUserService extends CrudService<SysUserMapper, SysUser>  {
 	
     /**
      * 删除用户和角色信息
-    * <p>Title: insertUserRole</p>  
-    * <p>Description: </p>  
-    * @param sysUser
+     * <p>Title: insertUserRole</p>  
+     * <p>Description: </p>  
+     * @param sysUser
      */
 	@Transactional(readOnly = false)
 	public void deleteUserRole(SysUser sysUser) {
 		mapper.deleteUserRole(sysUser);
 	};
 
-//	@Transactional(rollbackFor=Exception.class)
-//	public void saveUsers(List<SysUser> userList) {
-//		for(SysUser su:userList) {
-//			mapper.insert(su);	
-//		}
-//		if (true) {
-//	        throw new RuntimeException("save 抛异常了");
-//	    }
-//	}
+	/**
+	 * 根据用户名获取密码
+	 * @param username
+	 * @return
+	 */
+	public SysUser getPwdByUsername(SysUser sysUser) {
+		return mapper.getSysUserByUsername(sysUser);
+	}
 
 }

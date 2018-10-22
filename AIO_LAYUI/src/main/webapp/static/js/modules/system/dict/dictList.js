@@ -23,7 +23,7 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 	application.init();
 	
 	//获取权限并加载按钮
-	publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'get','but_per');
+	publicUtil.getPerms(application.PERMS_URL,application.HEADER,parent.cur_menu_id,'post','but_per');
 	
     //编码列表
     var tableIns = table.render({
@@ -38,10 +38,9 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
         page : true,
         height : "full-160",
         limit : 10,
-		headers : { 'Authorization' : application.HEADER},	
         id : "dictList",
         cols : [[
-/*            {field: 'id', title: 'ID', align:"center",style:'display:none;'},*/
+        	//{field: 'id', title: 'ID', align:"center",style:'display:none;'},
 			{type:'checkbox'},
             {field: 'typeCode', title: '编码类型'},
             {field: 'label', title: '编码名称'},
@@ -95,9 +94,9 @@ layui.use(['form','layer','laydate','table','laytpl','application','publicUtil']
 							tableIns.reload();
 							// location.reload();
 							top.layer.close(index);	
-							top.layer.msg(res.msg);							
+							top.layer.msg(res.msg,{time:1000});							
 						}else{
-							top.layer.msg(res.msg);
+							top.layer.msg(res.msg,{time:1000});
 						}
 
 					}

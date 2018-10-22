@@ -30,6 +30,8 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
     @Override
     protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
         HttpServletRequest req = (HttpServletRequest) request;
+        
+        //StringBuffer url=req.getRequestURL();
         String authorization = req.getHeader("Authorization");
         String time = req.getHeader("Time");
         String key = req.getHeader("Key");
@@ -58,7 +60,7 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
     }
 
     /**
-     *
+     * 登陆执行
      */
     @Override
     protected boolean executeLogin(ServletRequest request, ServletResponse response) throws Exception {
@@ -86,13 +88,15 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
         if (isLoginAttempt(request, response)) {
             try {
                 executeLogin(request, response);
+                return true;
             } catch (Exception e) {
                 response401(request, response);
+                return false;
             }
         }else {
         	response401(request, response);
+        	return false;
         }
-        return true;
     }
 
     /**
@@ -114,7 +118,7 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
     }
 
     /**
-     * 将非法请求跳转到 /401
+     * 将非法请求返回401
      */
     private RestResponse<String> response401(ServletRequest req, ServletResponse resp) {
        

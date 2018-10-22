@@ -7,7 +7,7 @@ package com.mpri.aio.gen.model;
 * @date 2018年8月7日
  */
 public class GenConfigInfo {
-	private static final long serialVersionUID = 123123L;
+	//private static final long serialVersionUID = 123123L;
 	/*
 	 * 项目名称
 	 */
@@ -18,6 +18,16 @@ public class GenConfigInfo {
 	private String version;
 
 	private String createTime;
+	
+	private String requestUrl;
+
+	public String getRequestUrl() {
+		return requestUrl;
+	}
+
+	public void setRequestUrl(String requestUrl) {
+		this.requestUrl = requestUrl;
+	}
 
 	/*
 	 * 生成的文件路径

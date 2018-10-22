@@ -6,8 +6,8 @@
 .rightztree{height:100% ;!important;}
 .layui-but-per{margin-bottom: 7px;margin-top:7px;}
 .layui-overflow-tree{overflow: auto;}
-.show_menu{width: 100px; display: none; position: absolute; left: 118px; top: 141px; line-height: 36px; padding: 5px; box-shadow: rgba(0, 0, 0, 0.12) 0px 2px 4px; border: 1px solid rgb(210, 210, 210); background-color: #f2f2f2; z-index: 100; border-radius: 2px; white-space: nowrap;}
-.show_menu dd a{font:14px;font-weight:bold}
+.show_menu{width: 100px; display: none; position: absolute; left: 118px; top: 141px; line-height: 36px; padding: 3px; box-shadow: rgba(0, 0, 0, 0.12) 0px 2px 4px; border: 1px solid rgb(210, 210, 210); background-color: #f2f2f2; z-index: 100; border-radius: 2px; white-space: nowrap;}
+.show_menu dd a{font-size:16px;font-weight:bold}
 .show_menu dd a:hover{background: #009688;  display: block; color:white}
 .layui-form{}
 .layui-upload-list{border-style: groove;}
@@ -85,7 +85,7 @@ form input.layui-input[disabled]{ background:#f2f2f2; color:#595963!important; }
 .loginHtml,.loginBody{ height:100%;}
 .loginBody{ background:url("../images/login_bg.jpg") no-repeat center center;}
 /* .loginBody{ background:url("../images/login_bg.jpg") no-repeat center center;} */
-.loginBody form.layui-form{ padding:0 20px; width:300px; height:335px; position:absolute; left:50%; top:50%; margin:-150px 0 0 -150px; -webkit-box-sizing:border-box;-moz-box-sizing:border-box; -o-box-sizing:border-box; box-sizing:border-box; background:#fff;-webkit-border-radius:5px; -moz-border-radius:5px; border-radius:5px; box-shadow:0 0 50px #009688;}
+.loginBody form.layui-form{ padding:0 20px; width:300px; height:280px; position:absolute; left:50%; top:50%; margin:-150px 0 0 -150px; -webkit-box-sizing:border-box;-moz-box-sizing:border-box; -o-box-sizing:border-box; box-sizing:border-box; background:#fff;-webkit-border-radius:5px; -moz-border-radius:5px; border-radius:5px; box-shadow:0 0 50px #009688;}
 .login_face{ margin:-55px auto 20px; width:100px; height:100px; -webkit-border-radius:50%; -moz-border-radius:50%; border-radius:50%; border:5px solid #fff; overflow:hidden;box-shadow:0 0 30px #009688;}
 .login_face img{ width:100%;}
 .loginBody .layui-form-item{ position:relative;}

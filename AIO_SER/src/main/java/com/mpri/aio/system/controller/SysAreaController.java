@@ -5,13 +5,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mpri.aio.base.controller.BaseController;
 import com.mpri.aio.common.exception.ExceptionResult;
+import com.mpri.aio.common.logs.Logs;
+import com.mpri.aio.common.page.PageIo;
 import com.mpri.aio.common.page.ResJson;
 import com.mpri.aio.common.response.RestResponse;
 import com.mpri.aio.system.model.SysArea;
@@ -33,16 +34,16 @@ public class SysAreaController extends BaseController {
 	
 	/**
 	 * 
-	* <p>Title: list</p>  
-	* <p>Description: </p>  
-	* @param pageNo
-	* @param pageSize
-	* @param sysDict
-	* @return
+	 * <p>Title: list</p>  
+	 * <p>Description: </p>  
+	 * @param pageNo
+	 * @param pageSize
+	 * @param sysDict
+	 * @return
 	 */
 	@CrossOrigin
-	@GetMapping(value = "/list")
-	public ResJson<SysArea> list(SysArea sysDict) {
+	@PostMapping("tree")
+	public ResJson<SysArea> tree(SysArea sysDict) {
 		ResJson<SysArea> rj = new ResJson<SysArea>();
 		List<SysArea> list =  sysAreaService.loadAllListBy(sysDict);	
 		rj.setData(list);
@@ -52,13 +53,31 @@ public class SysAreaController extends BaseController {
 	
 	/**
 	 * 
-	* <p>Title: save</p>  
-	* <p>Description: </p>  
-	* @param sysDict
-	* @return
+	 * <p>Title: list</p>  
+	 * <p>Description: </p>  
+	 * @param pageNo
+	 * @param pageSize
+	 * @param sysDict
+	 * @return
 	 */
 	@CrossOrigin
-	@PostMapping(value = "/save")
+	@PostMapping("list")
+	public PageIo<SysArea> list(int pageNo,int pageSize,SysArea sysDict) {
+		PageIo<SysArea> info = sysAreaService.loadByPage(pageNo,pageSize,sysDict);	
+		return info;
+	}
+	
+	
+	/**
+	 * 
+	 * <p>Title: save</p>  
+	 * <p>Description: </p>  
+	 * @param sysDict
+	 * @return
+	 */
+	@Logs(value = "区域修改",type ="UPDATE")
+	@CrossOrigin
+	@PostMapping("save")
 	public RestResponse<String> save(@Validated SysArea sysArea){
 		if("Root".equals(sysArea.getParentId())|| null == sysArea.getParentId()) {
 			//setRoot 目录
@@ -73,15 +92,15 @@ public class SysAreaController extends BaseController {
 		
 	}	
 	
-	/**\
-	 * 
-	* <p>Title: delete</p>  
-	* <p>Description: </p>  
-	* @param sysDict
-	* @return
+	/* 
+	 * <p>Title: delete</p>  
+	 * <p>Description: </p>  
+	 * @param sysDict
+	 * @return
 	 */
+	@Logs(value = "区域删除",type ="DELETE")
 	@CrossOrigin
-	@PostMapping(value = "/delete")
+	@PostMapping("delete")
 	public RestResponse<String> delete(SysArea sysArea) {
 		sysAreaService.delete(sysArea);
 		return new RestResponse<String>(ExceptionResult.REQUEST_SUCCESS, "删除成功！", "");
@@ -97,7 +116,7 @@ public class SysAreaController extends BaseController {
 	* @return
 	 */
 	@CrossOrigin
-	@PostMapping(value = "/get")
+	@PostMapping("get")
 	//@Cacheable(value = "dictCache", key = "#sysDict.id")
 	public RestResponse<SysArea> get(SysArea sysArea) {
 		
@@ -112,13 +131,13 @@ public class SysAreaController extends BaseController {
 	
 	/**
 	 * 
-	* <p>Title: POST</p>  
-	* <p>Description: </p>  
-	* @param sysDict
-	* @return
+	 * <p>Title: POST</p>  
+	 * <p>Description: </p>  
+	 * @param sysDict
+	 * @return
 	 */
 	@CrossOrigin
-	@PostMapping(value = "/loadChildrenByParent")
+	@PostMapping("loadChildrenByParent")
 	//@Cacheable(value = "dictCache", key = "#sysDict.id")
 	public RestResponse<List<SysArea>> loadChildrenByParent(SysArea sysArea) {
 		
@@ -128,14 +147,13 @@ public class SysAreaController extends BaseController {
 	
 	/**
 	 * 
-	* <p>Title: POST</p>  
-	* <p>Description: </p>  
-	* @param sysDict
-	* @return
+	 * <p>Title: POST</p>  
+	 * <p>Description: </p>  
+	 * @param sysDict
+	 * @return
 	 */
 	@CrossOrigin
-	@PostMapping(value = "/loadAllListBy")
-	//@Cacheable(value = "dictCache", key = "#sysDict.id")
+	@PostMapping("loadAllListBy")
 	public RestResponse<List<SysArea>> loadAllListBy(SysArea sysArea) {
 		return new RestResponse<List<SysArea>>(ExceptionResult.REQUEST_SUCCESS, "获取成功！", sysAreaService.loadAllListBy(sysArea));
 	}

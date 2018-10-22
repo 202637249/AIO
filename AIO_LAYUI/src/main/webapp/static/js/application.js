@@ -1,13 +1,17 @@
 "use strict";
-layui.define("jquery",function(exports){
+layui.define(["jquery",'layer'],function(exports){
     var $ = layui.jquery;
+    
     var obj ={
         //初始化
         init : function (){
             if(sessionStorage.getItem("token") === null ||
             sessionStorage.getItem("token") === "" ||
             sessionStorage.getItem("token") === undefined){
-            top.location.href = "../../../../login.html";
+        	top.layer.msg("因长时间未操作，请重新登陆!",{time:1000},function(){
+        		top.location.href = "../../../../login.html";
+			});
+            	
             }
             $(document).bind("contextmenu",function(e){
                return false;
@@ -17,8 +21,10 @@ layui.define("jquery",function(exports){
         initindex : function (){
             if(sessionStorage.getItem("token") === null ||
             sessionStorage.getItem("token") === "" ||
-            sessionStorage.getItem("token") === undefined){
-            top.location.href = "login.html";
+            sessionStorage.getItem("token") === undefined){ 	
+            	top.layer.msg("因长时间未操作，请重新登陆!",{time:1000},function(){
+            		top.location.href = "login.html";
+    			});
             }
         },
         //请求加密
@@ -37,20 +43,21 @@ layui.define("jquery",function(exports){
         REQUEST_ERROR:500,
         DATA_USED:201,
         //Login
-        BASE_URL : "http://192.168.140.37:80",
+        BASE_URL : "http://127.0.0.1:80",
         //服务的IP及端口
         SERVE_PORT: "8080",
-        SERVE_IP: "192.168.140.37",
-        SERVE_URL: "http://192.168.140.37:8080",
-        TMP_SERVE_URL: "http://192.168.140.37:8080",
+        SERVE_IP: "127.0.0.1",
+        SERVE_URL: "http://127.0.0.1:8080",
+        TMP_SERVE_URL: "http://127.0.0.1:8080",
         //获取权限的URL
-        PERMS_URL : "http://192.168.140.37:8080/getPagePer",
+        PERMS_URL : "http://127.0.0.1:8080/getPagePer",
         //token相关
         HEADER : sessionStorage.getItem("token"),
         TOKENTIME : sessionStorage.getItem("tokenTime"),
         TOKENISSUE : 5*60*1000, //五分钟续约有效期
         COMEFROM : "WEB",
-        KEY : "tXbjTgdcQ32mmr6g"
+        KEY : "tXbjTgdcQ32mmr6g",
+        SPACE: 25 //Token刷新请求频度(毫秒数) 频度毫秒数内不进行重复请求.
     }
     
     exports("application", obj);

@@ -1,18 +1,23 @@
 package com.mpri.aio.system.utils;
 
 import java.math.BigInteger;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 
-import sun.misc.BASE64Decoder;
-
-
+/**
+ * AES加密类
+ * @author Cary
+ * @date 2018年10月10日
+ */
 public class AESUtil {
+	
 	//密钥 (需要前端和后端保持一致)
     private static final String KEY = "tXbjTgdcQ32mmr6g";  
     //算法
@@ -63,8 +68,10 @@ public class AESUtil {
      * @param bytes 待编码的byte[] 
      * @return 编码后的base 64 code 
      */  
-    public static String base64Encode(byte[] bytes){  
-        return Base64.encodeBase64String(bytes);  
+    public static String base64Encode(byte[] bytes){ 
+    	Encoder encoder = Base64.getEncoder();
+        String encode = encoder.encodeToString(bytes);
+        return encode;
     }  
   
     /** 
@@ -74,7 +81,9 @@ public class AESUtil {
      * @throws Exception 
      */  
     public static byte[] base64Decode(String base64Code) throws Exception{  
-        return StringUtils.isEmpty(base64Code) ? null : new BASE64Decoder().decodeBuffer(base64Code);  
+    	Decoder decoder = Base64.getDecoder();
+        byte[] buffer = decoder.decode(base64Code);
+        return StringUtils.isEmpty(base64Code) ? null : buffer;
     }  
   
       
@@ -147,7 +156,7 @@ public class AESUtil {
         String encrypt = aesEncrypt(content, KEY);  
         System.out.println("加密后：" + encrypt);  
         
-        String decrypt = aesDecrypt("x5YFe5YHewXHe8OaGJYFEg==", KEY);  
+        String decrypt = aesDecrypt("8AGQcT0utJsxya8ojGZuGQ==", KEY);  
         System.out.println("解密后：" + decrypt);  
     } 
 }
